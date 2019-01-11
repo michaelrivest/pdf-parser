@@ -1,0 +1,747 @@
+<html>
+
+<head>
+    <title>PDF Parser</title>
+</head>
+
+<body>
+
+
+    <div id="canvasContainer">
+        <canvas id="main">
+        </canvas>
+    </div>
+    <div id="currentBoxDisplay"> </div>
+    <div id="completedBoxes">
+
+    </div>
+
+    <div id="rightSide">
+        <div id="rightContainer">
+
+            <div id="optionsDisplay">
+                <h3 class="sectionTitle">
+                    Options
+                </h3>
+                <!--
+        
+         <div class="optInput" title="Only Boxes above this threshold will be parsed">
+                    <label for="blCutoff">Black Cutoff: </label>
+                    <input placeholder="Black Cutoff" id="blCutoff" type="number">
+                </div>
+                -->
+
+
+                <div class="optInput" title="Text positions parsed from the document for determining matching boxes may be skewed. Offset text to the right to reallign with box positions.">
+                    <label for="skewX">Text Offset X: </label>
+                    <input placeholder="Skew X" id="skewX" type="number">
+                </div>
+
+                <div class="optInput" title="Text positions parsed from the document for determining matching boxes may be skewed. Offset text downwards to reallign with box positions.">
+                    <label for="skewY">Text Offset Y: </label>
+                    <input placeholder="Skew Y" id="skewY" type="number">
+                </div>
+
+
+                <div class="optInput">
+                    <label for="boxDemarcator">
+                        Box Demarcator: 
+                    </label>
+                    <select id="boxDemarcator" placeholder="Box Demarcator">
+                        <option value="coordinates">
+                            Box Coordinates
+                        </option>
+                        <option value="content">
+                            Box Text Content
+                        </option>
+                    </select>
+                </div>
+                <div class="optInput" title="Character used to seperate text lines in the parsed output. (Default: Single Space)">
+                    <label for="lineDelim">Line Seperator: </label>
+                    <select name="lineDelim" id="lineDelim" onchange="if (this.selectedIndex); lineSeperatorUpdate(this.value)">
+                        <option value=" ">Single Space</option>
+                        <option value="\n">New Line</option>
+                        <option value="">Nothing</option>
+                    </select>
+                </div>
+
+
+                <div style="height:10px;flex:100%;"> </div>
+                <div class="optInput" title="Allow boxes missing a single side when automatically determining boxes.">
+                    <input placeholder="Allow Partial Boxes" id="allowPartial" name="allowPartial" value="allowPartial" type="checkbox">
+                    <label for="allowPartial">Allow Partial Boxes</label>
+                </div>
+                <div class="optInput" title="Attempt to join texts in the document according to some addtional input parameters. Useful if parsed text appears garbled, containing no spaces or split words.">
+                    <input placeholder="Join Text" id="joinText" name="joinText" value="joinText" type="checkbox">
+                    <label for="joinText">Join Text</label>
+                </div>
+
+                <div style="height:5px;flex:100%;"> </div>
+
+                <div id="wordJoinOptions">
+                    <div class="optInput" title="Sequential text with a horizantal distance greater than this threshold will be considered a new line.">
+                        <label for="lineSplitX">Line Split X: </label>
+                        <input placeholder="Line Split X" id="lineSplitX" type="number">
+                    </div>
+                    <div class="optInput" title="Sequential text with a vertical distance greater than this threshold will be considered a new line.">
+                        <label for="lineSplitY">Line Split Y: </label>
+                        <input placeholder="Line Split Y" id="lineSplitY" type="number">
+                    </div>
+                    <div class="optInput" title="Sequential text with a horizantal distance greater than this threshhold will be considered a new word. (Default: 0)">
+                        <label for="wordJoinX">Word dX: </label>
+                        <input placeholder="Word distance (px)" id="wordJoinX" type="number">
+                    </div>
+                    <div class="optInput" title="Distance between letters used when determining word boundaries (Default: 4)">
+                        <label for="letterSpacingX">Letter dX: </label>
+                        <input placeholder="Letter distance (px)" id="letterSpacingX" type="number">
+                    </div>
+                </div>
+
+
+
+
+
+            </div>
+
+            <div id="boxesDisplay">
+                <h3 class="sectionTitle">
+                    Boxes
+                </h3>
+            </div>
+
+            <div id="newFileUpload">
+                <div id="fileDropZone">
+                    <div class="uploadContainer">
+                        <div id="selectUpload">
+                            <input id="newUpload" name="newUpload" type="file" accept="application/pdf" />
+                            <div id="selectedFileName"></div>
+                            <label for="newUpload"><strong>Select</strong> </label>
+                        </div>
+                        <span>or drop a new file in the options box to begin parsing.</span>
+                        <br>
+                        <span><strong>Click + Drag</strong> on the document to select boxes manually -- <strong>Ctrl + Click</strong> to delete.</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <button id="exportButton">
+                Export
+            </button>
+            <button id="parseButton">
+                Parse
+            </button>
+
+            <div id="dragDisplayText">
+                <h3>Drop PDF File to Parse</h3>
+            </div>
+
+
+        </div>
+        <div id="result">
+            <h3 class="sectionTitle">
+                Results
+            </h3>
+        </div>
+    </div>
+    <img id="parserImage" alt="" src="testBoxImage<%=id%>.png?50">
+    <style>
+        body {
+            padding-right: 50px;
+            padding-bottom: 50px;
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        #controlsText h3 {
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+        #wordJoinOptions {
+            width: 100%;
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #newUpload {
+            visibility: hidden;
+            width: 0px;
+        }
+
+        div.uploadContainer {
+            text-align: center;
+        }
+
+        div#selectUpload {
+            display: inline;
+        }
+
+        div#selectUpload label {
+            color: blue;
+            cursor: pointer;
+        }
+
+        #fileDropZone {
+            position: absolute;
+            bottom: 50px;
+            height: 100px;
+            width: 80%;
+            margin-left: 10%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #dragDisplayText {
+            position: absolute;
+            top: 45%;
+            width: 100%;
+            display: none;
+        }
+
+        #dragDisplayText h3 {
+            text-align: center;
+            margin: 0px;
+            font-size: 28px;
+            color: rgb(100, 100, 100);
+        }
+
+        #optionsDisplay {
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .optInput {
+            display: flex;
+            flex: 50% 0 0;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .optInput label {
+            flex: 100px 1 1;
+            padding-left: 15px;
+        }
+
+        .optInput input[type=number] {
+            flex: 50px 0 0;
+        }
+
+        .optInput input[type=checkbox] {
+            margin-left: 30%;
+        }
+
+        .optInput select {
+            flex: 181px 0 0;
+        }
+
+        .sectionTitle {
+            font-size: 20px;
+            flex: 100%;
+            color: rgb(80, 80, 80);
+            margin: 0px 0px 14px 0px;
+            text-align: center;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        div#rightSide {
+            position: absolute;
+            left: calc(50% - 300px);
+            min-height: 500px;
+            top: 30px;
+            width: 600px;
+            font-size: 15px;
+        }
+
+        #rightContainer {
+            padding: 21px;
+            position: relative;
+            min-height: 280px;
+            width: 100%;
+            border: 1px dashed grey;
+            z-index: 500;
+        }
+
+        #rightContainer.dragging {
+            border: 2px dashed rgb(50, 120, 250);
+            padding: 20px;
+        }
+
+        #rightContainer.dragging #optionsDisplay,
+        #rightContainer.dragging button,
+        #rightContainer.dragging #fileDropZone {
+            opacity: .25;
+        }
+
+        #rightContainer.dragging #dragDisplayText {
+            display: block;
+        }
+
+        #parserImage {
+            position: absolute;
+            top: 800px;
+            left: 30px;
+        }
+
+
+        #parseButton {
+            position: absolute;
+            width: 140px;
+            margin: auto;
+            bottom: 15px;
+            right: 20px;
+            background-color: rgb(32, 32, 136);
+            color: white;
+            font-size: 15px;
+            border: 1px solid rgb(100, 100, 100);
+            outline: none;
+        }
+
+        #exportButton {
+            position: absolute;
+            width: 140px;
+            margin: auto;
+            bottom: 15px;
+            right: 170px;
+            background-color: white(32, 32, 136);
+            color: rgb(30, 30, 30);
+            font-size: 15px;
+            border: 1px solid rgb(100, 100, 100);
+            outline: none;
+        }
+
+        #main {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+        }
+
+        #currentBoxDisplay {
+            border: 1px dashed blue;
+            position: absolute;
+            display: none;
+        }
+
+        #boxesDisplay {
+            display: none;
+        }
+
+        .completedBox {
+            border: 1px dashed red;
+            position: absolute;
+        }
+
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            width: 600px;
+            border: 1px dashed rgb(32, 32, 136);
+            display: none;
+            font-size: 14px;
+        }
+
+        span.resLabel {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .resContainer {
+            margin-top: 10px;
+        }
+
+        .resDataContainer {
+            margin-top: 6px;
+        }
+    </style>
+    <script>
+        let img = new Image();
+        img.src = 'pdfImage<%=id%>.png'
+        let canvas = document.getElementById('main')
+        let ctx = canvas.getContext('2d');
+        let iHeight;
+        let iWidth;
+        let parserImage = document.getElementById('parserImage')
+
+        let parseButton = document.getElementById('parseButton')
+        let exportButton = document.getElementById('exportButton')
+        let rightSide = document.getElementById('rightSide')
+        let pOptions = {
+            boxes: [],
+            blCutoff: 100,
+            skewX: 10,
+            skewY: 5,
+
+            joinText: false,
+            letterSpacingX: 4,
+            lineSplitX: 60,
+            lineSplitY: 10,
+            wordJoinX: 0,
+
+            allowPartial: false,
+            boxDemarcator: 'coordinates',
+
+        }
+        let currentBox;
+        let boxesDisplay = document.getElementById('boxesDisplay');
+
+        let resultDisplay = document.getElementById('result')
+        let completedBoxes = document.getElementById('completedBoxes');
+        let currentBoxDisplay = document.getElementById('currentBoxDisplay')
+        let wordJoinOptions = document.getElementById('wordJoinOptions');
+        let lineDelimSelect = document.getElementById('lineDelim')
+
+        img.onload = function () {
+            console.log("Loading image...")
+            console.log(img.src)
+            iHeight = this.height;
+            iWidth = this.width;
+            canvas.height = iHeight + 20;
+            canvas.width = iWidth + 20;
+
+            ctx.drawImage(img, 0, 0);
+            img.style.display = 'none';
+
+            parserImage.style.top = iHeight + 80;
+            rightSide.style.left = iWidth + 80;
+            drawScale(ctx, iHeight, iWidth)
+        };
+
+
+        initOptions();
+
+
+        function drawScale(ctx, height, width) {
+            ctx.font = '8px Arial'
+            let hMarker = Math.floor(height / 40);
+            let wMarker = Math.floor(width / 20)
+
+            for (let i = 0; i <= 40; i++) {
+                let h = hMarker * i;
+                let w = wMarker * i;
+                //   ctx.fillText(h, width - 10, h);
+                ctx.beginPath()
+                ctx.lineTo(0, h);
+                ctx.lineTo(5, h);
+                ctx.stroke()
+            }
+
+            for (let i = 0; i <= 20; i++) {
+                let h = hMarker * i;
+                let w = wMarker * i;
+                // ctx.fillText(w, w - 5, 5);
+                for (let j = 0; j < 4; j++) {
+                    ctx.beginPath()
+                    let step = wMarker / 4 * j;
+                    ctx.lineTo(w + (step), 0);
+                    ctx.lineTo(w + (step), j == 0 ? 8 : 5);
+                    ctx.stroke()
+                }
+
+            }
+        }
+        function initOptions() {
+            for (let k in pOptions) {
+                if (k != "boxes") {
+                    let optEle = document.getElementById(k);
+                    console.log(k)
+                    if (optEle) {
+                        optEle.addEventListener('change', updateOpt)
+                        optEle.value = pOptions[k];
+                    }
+                }
+            }
+
+            wordJoinOptions.className = "hide";
+            lineDelimSelect.value = " ";
+        }
+
+        function updateOpt(e) {
+            console.log("Event fired")
+            let src = e.srcElement;
+            if (src.type == 'checkbox') {
+                src.value = src.checked
+            }
+
+            let srcVal = src.value;
+            let srcId = src.id;
+            pOptions[srcId] = srcVal;
+
+            if (srcId == 'joinText') {
+                console.log(srcVal)
+                if (srcVal == 'false') {
+                    wordJoinOptions.className = 'hide';
+                } else {
+                    wordJoinOptions.className = '';
+                }
+            }
+        }
+
+        function lineSeperatorUpdate(e) {
+            console.log(e)
+        }
+        function deleteBoxElement(b) {
+            console.log('Deleting box')
+            console.log(b)
+            let boxY = Number(b.style.top.replace('px', '')) - canvas.offsetTop;
+            let boxX = Number(b.style.left.replace('px', '')) - canvas.offsetLeft;
+            let box = pOptions.boxes.find(cb => cb[0][0] == boxX && cb[0][1] == boxY)
+            let boxIndex = pOptions.boxes.indexOf(box);
+            pOptions.boxes.splice(boxIndex, 1);
+            displayBoxes()
+        }
+
+        function boxHTML(box) {
+            return `<span> [ [${box[0][0]}, ${box[0][1]}], [${box[1][0]}, ${box[1][1]}] ] </span>`
+        }
+        function boxesToText(boxArr) {
+            if (boxArr.length == 0) return "<span>[]</span>"
+            else return boxArr.map(b => boxHTML(b)).join('<span>, </span>')
+        }
+
+        function drawCompleted(box) {
+            let b = document.createElement("div");
+            b.addEventListener('click', (e) => {
+                console.log(e);
+                if (!e.ctrlKey) return false;
+                e.preventDefault();
+                deleteBoxElement(e.srcElement);
+            })
+            b.addEventListener('mousedown', handleMouseDown)
+            b.addEventListener('mousemove', handleMouseMove)
+            b.addEventListener('mouseup', handleMouseUp)
+
+            b.className = 'completedBox';
+            b.style.top = box[0][1] + canvas.offsetTop;
+            b.style.left = box[0][0] + canvas.offsetLeft;
+            b.style.width = box[1][0] - box[0][0];
+            b.style.height = box[1][1] - box[0][1];
+            completedBoxes.appendChild(b);
+        }
+
+        function displayBoxes() {
+            completedBoxes.innerHTML = "";
+            pOptions.boxes.forEach(b => drawCompleted(b))
+            boxesDisplay.innerHTML = "<h3 class='sectionTitle'>Boxes</h3>" + boxesToText(pOptions.boxes)
+        }
+
+        function handleExport() {
+            resultDisplay.style.display = 'block';
+
+            resultDisplay.innerHTML = "<h3 class='sectionTitle'>Options</h3>";
+            console.log(pOptions);
+
+            resultDisplay.innerHTML += "<div>{</div>"
+            for (let k in pOptions) {
+                if (k == 'boxes') {
+                    resultDisplay.innerHTML += `
+                    <div>
+                    <span class="resLabel">${k}: </span>
+                    <span class="resData">${boxesToText(pOptions.boxes)},</span>
+                    </div>`;
+                } else {
+                    resultDisplay.innerHTML += `
+                    <div>
+                    <span class="resLabel">${k}: </span>
+                    <span class="resData">${typeof pOptions[k] == 'string' ? `"${pOptions[k]}"` : pOptions[k] === null ? 'null' : pOptions[k]},</span>
+                    </div>`;
+                }
+
+            }
+            resultDisplay.innerHTML += "<div>}</div>"
+        }
+
+        function handleParse() {
+            resultDisplay.style.display = 'none;'
+            let parseEP = "http://<%=serverAddress%>/parse/<%=id%>"
+            let xmlHttp = new XMLHttpRequest();
+            xmlHttp.withCredentials = true;
+            xmlHttp.open("POST", parseEP, true)
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    let r = xmlHttp.responseText
+                    let res = JSON.parse(r);
+                    resultDisplay.style.display = 'block';
+
+                    console.log(res)
+                    displayResult(res.parsed.fields);
+                    console.log(res.parsed.image)
+                    reloadImages();
+                }
+            }
+            xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xmlHttp.send(JSON.stringify(pOptions));
+        }
+
+        function reloadImages() {
+            setTimeout(() => {
+                parserImage.src = "testBoxImage<%=id%>.png?" + new Date().getTime();
+                img.src = "pdfImage<%=id%>.png?" + new Date().getTime();
+            }, 800)
+
+        }
+        function displayResult(res) {
+            resultDisplay.innerHTML = "<h3 class='sectionTitle'>Results</h3>";
+            console.log(res);
+
+            for (let k in res) {
+                resultDisplay.innerHTML += `
+                    <div class="resContainer">
+                    <span class="resLabel">${k}: </span>
+                        <div class="resDataContainer">
+                    <span class="resData">${res[k]}</span>
+                    </div>
+                    </div>`;
+            }
+        }
+
+        function handleMouseMove(e) {
+            e.preventDefault();
+            if (!currentBox) return;
+            else {
+                currentBoxDisplay.style.width = e.pageX - (currentBox[0][0] + canvas.offsetLeft) + 'px';
+                currentBoxDisplay.style.height = e.pageY - (currentBox[0][1] + canvas.offsetTop) + 'px';
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (e.ctrlKey) return false;
+            if (!currentBox) return false;
+            let x = e.pageX - canvas.offsetLeft;
+            let y = e.pageY - canvas.offsetTop;
+            let bl = [x, y]
+            currentBox.push(bl);
+            console.log(currentBox);
+            pOptions.boxes.push(currentBox);
+            currentBox = null;
+            currentBoxDisplay.style.display = 'none';
+            currentBoxDisplay.style.height = '0px';
+            currentBoxDisplay.style.width = '0px';
+            displayBoxes();
+        }
+
+        function handleMouseDown(e) {
+            if (e.ctrlKey) return false;
+            e.preventDefault();
+            let x = e.pageX - canvas.offsetLeft;
+            let y = e.pageY - canvas.offsetTop;
+            let tr = [x, y]
+            currentBox = [tr];
+            currentBoxDisplay.style.display = 'block';
+            currentBoxDisplay.style.top = e.pageY;
+            currentBoxDisplay.style.left = e.pageX;
+
+        }
+
+        exportButton.addEventListener('click', handleExport);
+        parseButton.addEventListener('click', handleParse);
+        canvas.addEventListener('mousedown', handleMouseDown)
+        canvas.addEventListener('mousemove', handleMouseMove)
+        canvas.addEventListener('mouseup', handleMouseUp)
+
+        currentBoxDisplay.addEventListener('mousedown', handleMouseDown)
+        currentBoxDisplay.addEventListener('mousemove', handleMouseMove)
+        currentBoxDisplay.addEventListener('mouseup', handleMouseUp)
+
+        let uploadInput = document.getElementById('newUpload')
+
+        function getBase64(file, cb) {
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                cb(null, reader.result);
+            }
+            reader.onerror = (err) => {
+                cb(err, null)
+            }
+        }
+
+        function uploadPDF(e) {
+            console.log(e);
+            let file = uploadInput.files[0];
+            uploadRequest(file);
+        }
+
+        function uploadRequest(file) {
+            getBase64(file, (err, fileContent) => {
+                if (!err && fileContent) {
+
+                    let parseEP = "http://<%=serverAddress%>/upload/<%=id%>"
+                    let xmlHttp = new XMLHttpRequest();
+                    xmlHttp.withCredentials = true;
+                    xmlHttp.open("POST", parseEP, true)
+                    xmlHttp.onreadystatechange = function () {
+                        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                            let r = xmlHttp.responseText
+                            console.log(JSON.parse(r));
+                            document.getElementById('selectedFileName').innerHTML = `
+                    <span style="font-size:16px;">File: <b>${file.name}</b></span>
+                    `
+                            reloadImages();
+                        }
+                    }
+                    xmlHttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                    xmlHttp.send(JSON.stringify({ fileContent }));
+
+                }
+            })
+
+        }
+
+        uploadInput.addEventListener('change', uploadPDF);
+
+
+        var dragCount = 0;
+        let rightC = document.getElementById("rightContainer");
+        rightC.addEventListener('drop', dropHandler);
+        rightC.addEventListener('dragover', dragOverHandler);
+        rightC.addEventListener('dragenter', dragEnterHandler);
+        rightC.addEventListener('dragleave', dragLeaveHandler);
+
+        function dragOverHandler(e) {
+            e.preventDefault();
+        }
+
+        function dropHandler(e) {
+            console.log(e);
+            dragCount = 0;
+            rightC.className = "";
+            if (e.dataTransfer) {
+                let file = e.dataTransfer.files[0]
+                console.log(file);
+                if (file) uploadRequest(file);
+            }
+            e.preventDefault();
+        }
+
+        function dragEnterHandler(e) {
+            dragCount++
+            rightC.className = "dragging";
+            e.preventDefault();
+        }
+
+        function dragLeaveHandler(e) {
+            dragCount -= 1;
+            if (dragCount == 0) {
+                rightC.className = "";
+            }
+            e.preventDefault();
+        }
+
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,19 @@
+#! /usr/bin/env node
+let pdfParse = require('./server')
+let filename = process.argv[2];
+let debug = process.argv.indexOf('-d') >= 0;
+
+pdfParse.interactive({
+  blCutoff: 100,
+  skewX: 10,
+  skewY: 10,
+  joinText: false,
+  letterSpacingX: 4,
+  lineSplitX: 60,
+  lineSplitY: 10,
+  wordJoinX: 0,
+  allowPartial: false,
+  image: true,
+  debug: debug,
+});
+

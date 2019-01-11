@@ -1,0 +1,23 @@
+{
+  "name": "documentparser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google-cloud/vision": "^0.24.0",
+    "body-parser": "^1.18.3",
+    "canvas": "^1.6.13",
+    "cors": "^2.8.5",
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "express-session": "^1.15.6",
+    "image-parser": "^1.2.6",
+    "pdf2json": "^1.1.7",
+    "zeromq": "^5.1.0"
+  }
+}
