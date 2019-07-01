@@ -14,11 +14,16 @@ function randomString(length, radix = 36) {
 module.exports.interactive = interactive = function (options = { image: true } ) {
     let path = require('path');
     let fs = require('fs');
+    let tmpFolder = path.join(__dirname, '../tmp');
     let cors = require('cors');
     let express = require('express');
     let bodyParser = require('body-parser');
     let app = express();
     let port = 4775;
+
+    if (!fs.existsSync(tmpFolder)) {
+        fs.mkdirSync(tmpFolder, {recursive: true})
+    }
 
     let corsOptions = {
         credentials: true,
@@ -94,7 +99,9 @@ module.exports.interactive = interactive = function (options = { image: true } )
 
     app.post('/upload/:id', (req, res) => {
         let userFile = req.body.fileContent.slice(28)
-        let fileName = path.join(__dirname, '../tmp', req.params.id + '.pdf')
+        let fileName = path.join(tmpFolder, req.params.id + '.pdf')
+
+        
 
         fs.writeFile(fileName, Buffer.from(userFile, 'base64'), (err) => {
             if (err) throw err;
