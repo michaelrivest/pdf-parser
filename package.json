@@ -17,7 +17,7 @@
     "express": "^4.16.4",
     "express-session": "^1.15.6",
     "image-parser": "^1.2.6",
-    "pdf2json": "^1.1.7",
+    "pdf2json": "^1.1.8",
     "zeromq": "^5.1.0"
   }
 }
