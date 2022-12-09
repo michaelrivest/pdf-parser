@@ -14,7 +14,7 @@
     "canvas": "^1.6.13",
     "cors": "^2.8.5",
     "ejs": "^2.6.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-session": "^1.15.6",
     "image-parser": "^1.2.6",
     "pdf2json": "^1.1.8",
